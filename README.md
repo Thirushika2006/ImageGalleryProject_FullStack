@@ -196,7 +196,7 @@ CREATE TABLE images (
 
 ## 👨‍💻 Author
 
-**Yamini** — Java Full Stack Developer
+**Thirushika Vediyappan** — Java Full Stack Developer
 
 ---
 
