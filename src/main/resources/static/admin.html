@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f0f2f5; }
+        .navbar {
+            background: #1a252f; color: white;
+            padding: 15px 30px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .navbar h1 { font-size: 20px; }
+        .nav-btns { display: flex; gap: 10px; }
+        .nav-btn {
+            background: #3498db; color: white; border: none;
+            padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 14px;
+        }
+        .nav-btn:hover { background: #2980b9; }
+        .logout-btn {
+            background: #e74c3c; color: white; border: none;
+            padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 14px;
+        }
+        .logout-btn:hover { background: #c0392b; }
+
+        .container { margin: 25px 30px; }
+
+        /* Privacy notice */
+        .privacy-banner {
+            background: #d4edda; border: 1px solid #28a745;
+            border-radius: 8px; padding: 12px 20px;
+            margin-bottom: 20px; font-size: 14px; color: #155724;
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        /* Stats */
+        .stats-row {
+            display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;
+        }
+        .stat-card {
+            background: white; border-radius: 10px;
+            padding: 20px 30px; flex: 1; min-width: 150px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center;
+        }
+        .stat-card .number { font-size: 32px; font-weight: bold; }
+        .stat-card .label { font-size: 13px; color: #888; margin-top: 5px; }
+        .stat-card.blue .number { color: #3498db; }
+        .stat-card.green .number { color: #27ae60; }
+
+        /* Section */
+        .section {
+            background: white; border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 20px;
+        }
+        .section h3 {
+            margin-bottom: 15px; color: #2c3e50;
+            padding-bottom: 10px; border-bottom: 2px solid #f0f2f5;
+        }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            background: #2c3e50; color: white;
+            padding: 12px 15px; text-align: left; font-size: 13px;
+        }
+        td { padding: 12px 15px; border-bottom: 1px solid #f0f2f5; font-size: 14px; }
+        tr:hover td { background: #f8f9fa; }
+        .badge {
+            padding: 3px 10px; border-radius: 12px;
+            font-size: 11px; font-weight: bold;
+        }
+        .badge-admin { background: #ffeaa7; color: #d35400; }
+        .badge-user { background: #dfe6e9; color: #636e72; }
+        .delete-btn {
+            background: #e74c3c; color: white; border: none;
+            padding: 5px 12px; border-radius: 4px;
+            cursor: pointer; font-size: 12px;
+        }
+        .delete-btn:hover { background: #c0392b; }
+
+        .toast {
+            position: fixed; bottom: 20px; right: 20px;
+            background: #2c3e50; color: white;
+            padding: 12px 20px; border-radius: 8px;
+            font-size: 14px; display: none; z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <h1>👑 Admin Panel</h1>
+    <div class="nav-btns">
+        <button class="nav-btn" onclick="window.location.href='/gallery.html'">🖼️ Gallery</button>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- Privacy Notice -->
+    <div class="privacy-banner">
+        🔐 <strong>Privacy Protected:</strong>
+        Admin can only manage users. User photos are private and cannot be viewed by admin.
+        This ensures complete user privacy.
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+        <div class="stat-card blue">
+            <div class="number" id="totalUsers">-</div>
+            <div class="label">Total Users</div>
+        </div>
+        <div class="stat-card green">
+            <div class="number" id="totalImages">-</div>
+            <div class="label">Total Images</div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="section">
+        <h3>👥 All Users — Metadata Only (Photos Hidden for Privacy)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Images Uploaded</th>
+                    <th>Storage Used</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="usersTable">
+                <tr><td colspan="6">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.innerText = msg; t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 3000);
+}
+
+async function loadUsers() {
+    try {
+        const res = await fetch('/api/admin/users');
+        if (res.status === 403) {
+            alert('Access denied! Admin only.');
+            window.location.href = '/gallery.html';
+            return;
+        }
+        const users = await res.json();
+
+        // Stats
+        document.getElementById('totalUsers').innerText = users.length;
+        const totalImgs = users.reduce((sum, u) => sum + (u.imageCount || 0), 0);
+        document.getElementById('totalImages').innerText = totalImgs;
+
+        // Table
+        const tbody = document.getElementById('usersTable');
+        tbody.innerHTML = '';
+
+        if (users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="color:#888">No users found.</td></tr>';
+            return;
+        }
+
+        users.forEach((u, i) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${i + 1}</td>
+                <td><strong>${u.username}</strong></td>
+                <td><span class="badge ${u.role === 'ADMIN' ? 'badge-admin' : 'badge-user'}">${u.role}</span></td>
+                <td>${u.imageCount} images</td>
+                <td>${u.storageUsed}</td>
+                <td>
+                    ${u.role !== 'ADMIN' ?
+                        `<button class="delete-btn" onclick="deleteUser(${u.id}, '${u.username}')">🗑 Delete User</button>` :
+                        '<span style="color:#888;font-size:12px;">Protected</span>'
+                    }
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+    } catch(err) {
+        console.error(err);
+        showToast('Error loading users');
+    }
+}
+
+async function deleteUser(id, username) {
+    if (!confirm(`Delete user "${username}" and all their data? This cannot be undone!`)) return;
+    try {
+        const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+        const msg = await res.text();
+        showToast(msg);
+        loadUsers();
+    } catch(err) { showToast('Delete failed'); }
+}
+
+async function logout() {
+    try { await fetch('/api/auth/logout', { method: 'POST' }); } catch(e) {}
+    window.location.href = '/login.html';
+}
+
+loadUsers();
+</script>
+</body>
+</html>

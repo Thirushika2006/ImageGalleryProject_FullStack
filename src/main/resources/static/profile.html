@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Profile</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f0f2f5; }
+
+        .navbar {
+            background: #2c3e50; color: white;
+            padding: 15px 30px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .navbar h1 { font-size: 20px; }
+        .nav-btns { display: flex; gap: 10px; align-items: center; }
+        .nav-btn {
+            background: #3498db; color: white;
+            border: none; padding: 8px 15px;
+            border-radius: 5px; cursor: pointer; font-size: 14px;
+            text-decoration: none;
+        }
+        .nav-btn:hover { background: #2980b9; }
+        .logout-btn {
+            background: #e74c3c; color: white;
+            border: none; padding: 8px 15px;
+            border-radius: 5px; cursor: pointer; font-size: 14px;
+        }
+        .logout-btn:hover { background: #c0392b; }
+
+        .container {
+            max-width: 600px; margin: 40px auto; padding: 0 20px;
+        }
+
+        /* Profile Card */
+        .profile-card {
+            background: white; border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 40px; text-align: center; margin-bottom: 25px;
+        }
+        .avatar {
+            width: 90px; height: 90px; border-radius: 50%;
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 36px; color: white; font-weight: bold;
+        }
+        .profile-card h2 {
+            font-size: 24px; color: #2c3e50; margin-bottom: 5px;
+        }
+        .profile-card p {
+            color: #888; font-size: 14px; margin-bottom: 25px;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: flex; gap: 15px; justify-content: center;
+        }
+        .stat-box {
+            background: #f8f9fa; border-radius: 10px;
+            padding: 20px 30px; text-align: center; flex: 1;
+        }
+        .stat-box .number {
+            font-size: 32px; font-weight: bold; color: #2c3e50;
+        }
+        .stat-box .label {
+            font-size: 12px; color: #888; margin-top: 5px;
+        }
+        .stat-box.blue .number { color: #3498db; }
+        .stat-box.green .number { color: #27ae60; }
+        .stat-box.purple .number { color: #9b59b6; }
+
+        /* Info Card */
+        .info-card {
+            background: white; border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 25px;
+        }
+        .info-card h3 {
+            font-size: 16px; color: #2c3e50;
+            margin-bottom: 15px; padding-bottom: 10px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+        .info-row {
+            display: flex; justify-content: space-between;
+            padding: 12px 0; border-bottom: 1px solid #f0f2f5;
+            font-size: 14px;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-row .key { color: #888; }
+        .info-row .val { color: #2c3e50; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <h1>👤 My Profile</h1>
+    <div class="nav-btns">
+        <a href="/gallery.html" class="nav-btn">🖼️ Gallery</a>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- Profile Card -->
+    <div class="profile-card">
+        <div class="avatar" id="avatarLetter">?</div>
+        <h2 id="profileUsername">Loading...</h2>
+        <p>Image Gallery Member</p>
+
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-box blue">
+                <div class="number" id="imageCount">-</div>
+                <div class="label">Total Images</div>
+            </div>
+            <div class="stat-box green">
+                <div class="number" id="storageUsed">-</div>
+                <div class="label">Storage Used</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Card -->
+    <div class="info-card">
+        <h3>📋 Account Details</h3>
+        <div class="info-row">
+            <span class="key">Username</span>
+            <span class="val" id="infoUsername">-</span>
+        </div>
+        <div class="info-row">
+            <span class="key">Total Images Uploaded</span>
+            <span class="val" id="infoImages">-</span>
+        </div>
+        <div class="info-row">
+            <span class="key">Total Storage Used</span>
+            <span class="val" id="infoStorage">-</span>
+        </div>
+        <div class="info-row">
+            <span class="key">Account Type</span>
+            <span class="val">Standard User</span>
+        </div>
+    </div>
+
+</div>
+
+<script>
+async function loadProfile() {
+    try {
+        const res = await fetch('/api/profile');
+        if (res.status === 401) {
+            window.location.href = '/login.html';
+            return;
+        }
+        const data = await res.json();
+
+        // Avatar letter
+        document.getElementById('avatarLetter').innerText =
+            data.username.charAt(0).toUpperCase();
+
+        // Profile card
+        document.getElementById('profileUsername').innerText = data.username;
+        document.getElementById('imageCount').innerText = data.imageCount;
+        document.getElementById('storageUsed').innerText = data.storageUsed;
+
+        // Info card
+        document.getElementById('infoUsername').innerText = data.username;
+        document.getElementById('infoImages').innerText = data.imageCount + ' images';
+        document.getElementById('infoStorage').innerText = data.storageUsed;
+
+    } catch (err) {
+        console.error('Failed to load profile:', err);
+    }
+}
+
+async function logout() {
+    try { await fetch('/api/auth/logout', { method: 'POST' }); } catch(e) {}
+    window.location.href = '/login.html';
+}
+
+loadProfile();
+</script>
+</body>
+</html>

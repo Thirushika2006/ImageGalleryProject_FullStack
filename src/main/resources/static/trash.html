@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Recycle Bin</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f0f2f5; }
+        .navbar {
+            background: #2c3e50; color: white;
+            padding: 15px 30px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .navbar h1 { font-size: 20px; }
+        .nav-btns { display: flex; gap: 10px; }
+        .nav-btn {
+            background: #3498db; color: white; border: none;
+            padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 14px;
+        }
+        .nav-btn:hover { background: #2980b9; }
+        .logout-btn {
+            background: #e74c3c; color: white; border: none;
+            padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 14px;
+        }
+        .logout-btn:hover { background: #c0392b; }
+        .container { margin: 25px 30px; }
+        .info-banner {
+            background: #fff3cd; border: 1px solid #ffc107;
+            border-radius: 8px; padding: 12px 20px;
+            margin-bottom: 20px; font-size: 14px; color: #856404;
+        }
+        .gallery { display: flex; flex-wrap: wrap; gap: 15px; }
+        .image-card {
+            background: white; border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            width: 220px; overflow: hidden; opacity: 0.85;
+        }
+        .image-card img {
+            width: 100%; height: 150px; object-fit: cover;
+            display: block; filter: grayscale(30%);
+        }
+        .card-body { padding: 12px; }
+        .img-name {
+            font-weight: bold; font-size: 13px; color: #333;
+            margin-bottom: 4px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .meta { font-size: 11px; color: #e74c3c; margin-bottom: 10px; }
+        .btn-row { display: flex; gap: 5px; }
+        .btn {
+            flex: 1; padding: 7px 4px; border: none;
+            border-radius: 4px; cursor: pointer;
+            font-size: 12px; font-weight: bold;
+        }
+        .btn-restore { background: #27ae60; color: white; }
+        .btn-restore:hover { background: #219a52; }
+        .btn-delete { background: #e74c3c; color: white; }
+        .btn-delete:hover { background: #c0392b; }
+        .empty-msg { color: #888; font-style: italic; margin-top: 20px; font-size: 16px; }
+        .toast {
+            position: fixed; bottom: 20px; right: 20px;
+            background: #2c3e50; color: white;
+            padding: 12px 20px; border-radius: 8px;
+            font-size: 14px; display: none; z-index: 999;
+        }
+        .section-header {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 15px;
+        }
+        .section-header h3 { color: #333; }
+        .empty-all-btn {
+            background: #e74c3c; color: white; border: none;
+            padding: 8px 15px; border-radius: 5px;
+            cursor: pointer; font-size: 13px;
+        }
+        .empty-all-btn:hover { background: #c0392b; }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <h1>🗑️ Recycle Bin</h1>
+    <div class="nav-btns">
+        <button class="nav-btn" onclick="window.location.href='/gallery.html'">🖼️ Gallery</button>
+        <button class="nav-btn" onclick="window.location.href='/profile.html'">👤 Profile</button>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="info-banner">
+        ⚠️ Images in the recycle bin are not permanently deleted yet.
+        Click <strong>Restore</strong> to recover an image, or <strong>Delete Forever</strong> to remove it permanently.
+    </div>
+
+    <div class="section-header">
+        <h3>🗑️ Deleted Images</h3>
+        <button class="empty-all-btn" onclick="emptyTrash()">🗑 Empty All</button>
+    </div>
+
+    <div class="gallery" id="gallery"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.innerText = msg;
+    toast.style.display = 'block';
+    setTimeout(() => toast.style.display = 'none', 3000);
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString();
+}
+
+async function loadTrash() {
+    try {
+        const res = await fetch('/api/images/trash');
+        if (res.status === 401) { window.location.href = '/login.html'; return; }
+        const images = await res.json();
+
+        const gallery = document.getElementById('gallery');
+        gallery.innerHTML = '';
+
+        if (images.length === 0) {
+            gallery.innerHTML = '<p class="empty-msg">✅ Recycle bin is empty!</p>';
+            return;
+        }
+
+        images.forEach(image => {
+            const card = document.createElement('div');
+            card.className = 'image-card';
+            card.id = `card-${image.id}`;
+
+            const img = document.createElement('img');
+            img.src = `/uploads/${image.path}`;
+            img.alt = image.name;
+            img.onerror = () => { img.src = 'https://placehold.co/220x150?text=No+Preview'; };
+
+            const body = document.createElement('div');
+            body.className = 'card-body';
+
+            const nameEl = document.createElement('div');
+            nameEl.className = 'img-name';
+            nameEl.title = image.name;
+            nameEl.innerText = image.name;
+
+            const meta = document.createElement('div');
+            meta.className = 'meta';
+            meta.innerText = `🗑 Deleted on ${formatDate(image.uploadTime)}`;
+
+            const btnRow = document.createElement('div');
+            btnRow.className = 'btn-row';
+
+            const restoreBtn = document.createElement('button');
+            restoreBtn.className = 'btn btn-restore';
+            restoreBtn.innerText = '♻️ Restore';
+            restoreBtn.onclick = () => restoreImage(image.id);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-delete';
+            deleteBtn.innerText = '❌ Delete Forever';
+            deleteBtn.onclick = () => permanentDelete(image.id);
+
+            btnRow.appendChild(restoreBtn);
+            btnRow.appendChild(deleteBtn);
+            body.appendChild(nameEl);
+            body.appendChild(meta);
+            body.appendChild(btnRow);
+            card.appendChild(img);
+            card.appendChild(body);
+            gallery.appendChild(card);
+        });
+    } catch(err) {
+        console.error(err);
+        showToast('Error loading trash');
+    }
+}
+
+async function restoreImage(id) {
+    try {
+        const res = await fetch(`/api/images/trash/restore/${id}`, { method: 'PUT' });
+        const msg = await res.text();
+        showToast(msg);
+        loadTrash();
+    } catch(err) { showToast('Restore failed'); }
+}
+
+async function permanentDelete(id) {
+    if (!confirm('Permanently delete this image? This cannot be undone!')) return;
+    try {
+        const res = await fetch(`/api/images/trash/permanent/${id}`, { method: 'DELETE' });
+        const msg = await res.text();
+        showToast(msg);
+        loadTrash();
+    } catch(err) { showToast('Delete failed'); }
+}
+
+async function emptyTrash() {
+    if (!confirm('Permanently delete ALL images in trash? This cannot be undone!')) return;
+    try {
+        const res = await fetch('/api/images/trash');
+        const images = await res.json();
+        for (const img of images) {
+            await fetch(`/api/images/trash/permanent/${img.id}`, { method: 'DELETE' });
+        }
+        showToast('Trash emptied!');
+        loadTrash();
+    } catch(err) { showToast('Failed to empty trash'); }
+}
+
+async function logout() {
+    try { await fetch('/api/auth/logout', { method: 'POST' }); } catch(e) {}
+    window.location.href = '/login.html';
+}
+
+loadTrash();
+</script>
+</body>
+</html>
