@@ -7,14 +7,20 @@ A full-stack **Image Gallery** web application built with **Java Spring Boot** a
 ## 🚀 Features
 
 - ✅ **User Registration & Login** — Secure authentication using Spring Security & BCrypt
+  ![Image](https://github.com/user-attachments/assets/92726c12-cd36-44d7-a6a8-3b9aa8834fa4)
 - ✅ **Image Upload** — Upload images directly to Cloudinary cloud storage
 - ✅ **Private Gallery** — Each user sees only their own images
+  ![Image](https://github.com/user-attachments/assets/d00f433d-754c-415a-93ae-43ba51ccf73f)
 - ✅ **Search & Filter** — Search images by name instantly
 - ✅ **Pagination** — Browse images 6 per page with Next/Previous buttons
 - ✅ **Rename & Download** — Rename or download any image
+  ![Image](https://github.com/user-attachments/assets/d00f433d-754c-415a-93ae-43ba51ccf73f)
 - ✅ **Recycle Bin** — Soft delete with restore and permanent delete options
+  ![Image](https://github.com/user-attachments/assets/5f90e44e-113d-4cf5-85c4-8b06b44ee9ad)
 - ✅ **Profile Page** — View username, total images, and storage used
+  ![Image](https://github.com/user-attachments/assets/04161a2b-ae11-442d-bc5c-abff4e714f0b)
 - ✅ **Admin Panel** — Manage users with role-based access control
+  ![Image](https://github.com/user-attachments/assets/6f274427-7791-497f-9bae-44a3b011b3e6)
 - ✅ **Privacy Protected** — Admin cannot view user photos
 - ✅ **Image Compression** — Auto-compress images on upload using Thumbnailator
 - ✅ **Cloud Storage** — Images stored on Cloudinary (not local disk)
